@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="混合油">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>混合油計算</title>
+<style>
+:root{
+  --bg:#f2f4f7;--card:#fff;--text:#1c2330;--sub:#6b7686;--line:#e2e6ec;
+  --main:#e8590c;--main-t:#fff;--soft:#fff0e6;--danger:#d63a3a;
+  color-scheme:light;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#101319;--card:#1b2029;--text:#eef1f6;--sub:#97a1b2;--line:#2b3240;
+    --main:#ff8a3d;--main-t:#1a1208;--soft:#3a2a1c;--danger:#ff6b6b;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101319;--card:#1b2029;--text:#eef1f6;--sub:#97a1b2;--line:#2b3240;
+  --main:#ff8a3d;--main-t:#1a1208;--soft:#3a2a1c;--danger:#ff6b6b;color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;
+  font-size:16px;line-height:1.5}
+main{max-width:560px;margin:0 auto;padding:16px 16px 110px}
+h1{font-size:22px;margin:8px 0 14px}
+h2{font-size:14px;color:var(--sub);margin:0 0 10px;font-weight:600}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border-radius:22px;border:1.5px solid var(--line);background:var(--card);
+  color:var(--text);font-size:16px;font-weight:600;font-family:inherit}
+.chip.on{background:var(--main);border-color:var(--main);color:var(--main-t)}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:12px}
+.seg button{flex:1;min-height:44px;border:0;border-radius:10px;background:transparent;color:var(--sub);
+  font-size:15px;font-weight:700;font-family:inherit}
+.seg button.on{background:var(--main);color:var(--main-t)}
+.wheels{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:4px}
+.wheels::before{content:"";position:absolute;left:0;right:0;top:80px;height:40px;background:var(--soft);
+  border-radius:10px;z-index:0}
+.wheel{position:relative;z-index:1;height:200px;overflow-y:scroll;scroll-snap-type:y mandatory;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-y;
+  -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);
+  mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.wheel::-webkit-scrollbar{display:none}
+.wpad{height:80px}
+.wi{height:40px;line-height:40px;scroll-snap-align:center;text-align:center;
+  font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.wsep{height:200px;display:flex;align-items:center;padding:0 6px;font-size:20px;font-weight:700;
+  color:var(--main);position:relative;z-index:1}
+input[type=text]{width:100%;min-height:48px;border-radius:12px;border:1.5px solid var(--line);
+  background:var(--bg);color:var(--text);font-size:17px;padding:0 12px;font-family:inherit}
+.result{background:var(--main);color:var(--main-t);text-align:center;padding:20px 14px}
+.result .lab{font-size:14px;opacity:.9}
+.result .big{font-size:52px;font-weight:800;line-height:1.15}
+.result .big small{font-size:22px;font-weight:700;margin-left:4px}
+.result .sub{font-size:14px;opacity:.9;margin-top:4px}
+.btn{width:100%;min-height:52px;border:0;border-radius:14px;background:var(--text);color:var(--bg);
+  font-size:17px;font-weight:700;font-family:inherit;margin-top:10px}
+.btn.sec{background:var(--soft);color:var(--main)}
+.btn.dng{background:transparent;color:var(--danger);border:1.5px solid var(--danger)}
+.item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .grow{flex:1;min-width:0}
+.item .t{font-weight:700}
+.item .d{font-size:13px;color:var(--sub)}
+.item .v{font-weight:800;color:var(--main);white-space:nowrap}
+.tag{font-size:11px;background:var(--soft);color:var(--main);border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:700}
+.x{flex:none;min-width:44px;min-height:44px;border:0;background:transparent;color:var(--danger);font-size:14px;font-weight:700;font-family:inherit}
+.empty{text-align:center;color:var(--sub);padding:28px 8px}
+.note{font-size:14px;color:var(--sub);margin:6px 0 0}
+ol{margin:0;padding-left:20px}ol li{margin-bottom:6px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);z-index:20}
+nav button{flex:1;border:0;background:transparent;color:var(--sub);padding:8px 0 6px;font-family:inherit;
+  font-size:11px;font-weight:700;min-height:58px}
+nav button span{display:block;font-size:24px;line-height:1.2}
+nav button.on{color:var(--main)}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:var(--text);color:var(--bg);padding:10px 18px;border-radius:20px;font-weight:700;font-size:14px;
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="toast"></div>
+<nav>
+  <button data-tab="calc"><span>🧮</span>計算</button>
+  <button data-tab="hist"><span>🕘</span>履歴</button>
+  <button data-tab="set"><span>⚙️</span>設定</button>
+</nav>
+
+<script>
+var KEY = 'mixratio_v1';
+var ITEM = 40;
+function range(a, b, step) { var r = []; for (var v = a; v <= b + 1e-9; v += step) r.push(Math.round(v * 10) / 10); return r; }
+var W_RATIO = range(10, 100, 1), W_INT = range(0, 30, 1), W_DEC = range(0, 9, 1), W_OIL = range(0, 1000, 5);
+var WV = {};
+var S = {
+  mode: 'fwd', ratio: 50, gas: 1, oil: 500, memo: '',
+  machines: [{id: 1, name: '草刈機', ratio: 25}, {id: 2, name: 'チェンソー', ratio: 50}],
+  history: []
+};
+var tab = 'calc', confirmClear = false, tmpRatio = 25;
+
+function load() {
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var d = JSON.parse(raw); for (var k in d) S[k] = d[k]; }
+  } catch (e) {}
+  S.ratio = parseFloat(S.ratio) || 50;
+  S.gas = parseFloat(S.gas) || 1;
+  S.oil = parseFloat(S.oil) || 500;
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+  });
+}
+function fmtMl(n) {
+  if (n === null) return '--';
+  return n >= 100 ? String(Math.round(n)) : String(Number(n.toFixed(1)));
+}
+function fmtL(n) { return n === null ? '--' : String(Number(n.toFixed(2))); }
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 1600);
+}
+function nearestIdx(vals, v) {
+  var b = 0, d = 1e9;
+  for (var i = 0; i < vals.length; i++) { var x = Math.abs(vals[i] - v); if (x < d) { d = x; b = i; } }
+  return b;
+}
+
+/* ドラムロール */
+function wheel(id, vals, cur, w) {
+  WV[id] = vals;
+  var idx = nearestIdx(vals, cur);
+  return '<div class="wheel" id="' + id + '" data-idx="' + idx + '" style="width:' + w + 'px"><div class="wpad"></div>' +
+    vals.map(function (v, i) { return '<div class="wi" data-i="' + i + '">' + v + '</div>'; }).join('') +
+    '<div class="wpad"></div></div>';
+}
+function sep(t) { return '<div class="wsep">' + t + '</div>'; }
+function initWheels() {
+  document.querySelectorAll('.wheel').forEach(function (el) {
+    var id = el.id, vals = WV[id], last = parseInt(el.dataset.idx, 10), timer = null;
+    el.scrollTop = last * ITEM;
+    el.addEventListener('scroll', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var i = Math.max(0, Math.min(vals.length - 1, Math.round(el.scrollTop / ITEM)));
+        if (i !== last) { last = i; onWheel(id, vals[i]); }
+      }, 90);
+    });
+    el.addEventListener('click', function (e) {
+      var t = e.target.closest('.wi');
+      if (t) el.scrollTo({top: parseInt(t.dataset.i, 10) * ITEM, behavior: 'smooth'});
+    });
+  });
+}
+function setWheel(id, v) {
+  var el = document.getElementById(id);
+  if (el) el.scrollTo({top: nearestIdx(WV[id], v) * ITEM, behavior: 'smooth'});
+}
+function gasParts() {
+  var t = Math.round((parseFloat(S.gas) || 0) * 10);
+  return [Math.floor(t / 10), t % 10];
+}
+function onWheel(id, v) {
+  var p = gasParts();
+  if (id === 'wRatio') S.ratio = v;
+  else if (id === 'wGasI') S.gas = v + p[1] / 10;
+  else if (id === 'wGasD') S.gas = p[0] + v / 10;
+  else if (id === 'wOil') S.oil = v;
+  else if (id === 'wMRatio') { tmpRatio = v; return; }
+  save(); refreshCalc();
+}
+
+/* 計算 */
+function calcNow() {
+  var r = parseFloat(S.ratio);
+  if (S.mode === 'rev') {
+    var o = parseFloat(S.oil);
+    return (r > 0 && o > 0) ? o * r / 1000 : null;
+  }
+  var g = parseFloat(S.gas);
+  return (r > 0 && g > 0) ? g * 1000 / r : null;
+}
+
+function renderCalc() {
+  var rev = S.mode === 'rev', p = gasParts();
+  var m = S.machines.map(function (x) {
+    return '<button class="chip" data-act="machine" data-id="' + x.id + '">' + esc(x.name) + ' ' + x.ratio + ':1</button>';
+  }).join('') || '<p class="note">設定タブで機械を登録できます</p>';
+  var amount = rev
+    ? '<div class="card"><h2>手持ちのオイルの量</h2><div class="wheels">' + wheel('wOil', W_OIL, S.oil, 120) + sep('mL') + '</div></div>'
+    : '<div class="card"><h2>ガソリンの量</h2><div class="wheels">' + wheel('wGasI', W_INT, p[0], 70) + sep('.') +
+      wheel('wGasD', W_DEC, p[1], 60) + sep('L') + '</div></div>';
+  return '<h1>混合油を計算</h1>' +
+    '<div class="seg"><button data-act="mode" data-v="fwd" class="' + (rev ? '' : 'on') + '">オイル量を出す</button>' +
+    '<button data-act="mode" data-v="rev" class="' + (rev ? 'on' : '') + '">ガソリン量を出す（逆算）</button></div>' +
+    '<div class="card"><h2>機械から選ぶ</h2><div class="chips">' + m + '</div></div>' +
+    '<div class="card"><h2>混合比（ガソリン : オイル）</h2><div class="wheels">' +
+    wheel('wRatio', W_RATIO, S.ratio, 100) + sep(': 1') + '</div></div>' +
+    amount +
+    '<div class="card result"><div class="lab" id="resLab"></div>' +
+    '<div class="big"><span id="resOut"></span><small id="resUnit"></small></div>' +
+    '<div class="sub" id="resSub"></div></div>' +
+    '<div class="card"><h2>メモ（任意）</h2>' +
+    '<input id="memoIn" type="text" placeholder="例：草刈機、バイク" value="' + esc(S.memo) + '">' +
+    '<button class="btn" data-act="saveHist">履歴に保存</button></div>';
+}
+function refreshCalc() {
+  var out = document.getElementById('resOut');
+  if (!out) return;
+  var rev = S.mode === 'rev', v = calcNow();
+  document.getElementById('resLab').textContent = rev ? '作れるガソリンの量' : '入れるオイルの量';
+  document.getElementById('resUnit').textContent = rev ? 'L' : 'mL';
+  out.textContent = rev ? fmtL(v) : fmtMl(v);
+  document.getElementById('resSub').textContent = rev
+    ? 'オイル ' + S.oil + ' mL ・ 混合比 ' + S.ratio + ':1'
+    : 'ガソリン ' + S.gas + ' L ・ 混合比 ' + S.ratio + ':1';
+  document.querySelectorAll('[data-act=machine]').forEach(function (b) {
+    var m = S.machines.filter(function (x) { return String(x.id) === b.dataset.id; })[0];
+    b.classList.toggle('on', !!m && m.name === S.memo && parseFloat(m.ratio) === parseFloat(S.ratio));
+  });
+}
+
+function renderHist() {
+  var h = S.history;
+  var list = h.length ? h.map(function (x, i) {
+    var rev = x.mode === 'rev';
+    var d = rev ? 'オイル ' + x.oilIn + ' mL' : 'ガソリン ' + x.gas + ' L';
+    var v = rev ? fmtL(x.gas) + ' L' : fmtMl(x.oil) + ' mL';
+    return '<div class="item"><div class="grow"><div class="t">' + esc(x.memo || '（メモなし）') +
+      (rev ? '<span class="tag">逆算</span>' : '') + '</div>' +
+      '<div class="d">' + esc(x.date) + '　' + d + '　' + x.ratio + ':1</div></div>' +
+      '<div class="v">' + v + '</div>' +
+      '<button class="x" data-act="delHist" data-i="' + i + '">削除</button></div>';
+  }).join('') : '<div class="empty">まだ履歴がありません<br>計算タブで「履歴に保存」を押すとここに残ります</div>';
+  var clr = h.length ? '<button class="btn dng" data-act="clearHist">' +
+    (confirmClear ? '本当に全て削除する（もう一度タップ）' : '履歴をすべて削除') + '</button>' : '';
+  return '<h1>履歴</h1><div class="card">' + list + '</div>' + clr;
+}
+
+function renderSet() {
+  var list = S.machines.length ? S.machines.map(function (x) {
+    return '<div class="item"><div class="grow"><div class="t">' + esc(x.name) + '</div></div>' +
+      '<div class="v">' + x.ratio + ':1</div>' +
+      '<button class="x" data-act="delMachine" data-id="' + x.id + '">削除</button></div>';
+  }).join('') : '<div class="empty">登録された機械はありません</div>';
+  return '<h1>設定</h1>' +
+    '<div class="card"><h2>よく使う機械を登録</h2>' + list +
+    '<div style="margin-top:12px"><input id="mName" type="text" placeholder="機械の名前（例：バイク）">' +
+    '<h2 style="margin-top:14px">混合比</h2><div class="wheels">' + wheel('wMRatio', W_RATIO, tmpRatio, 100) + sep(': 1') + '</div>' +
+    '<button class="btn sec" data-act="addMachine">機械を追加</button></div></div>' +
+    '<div class="card"><h2>ホーム画面に追加する方法</h2><ol>' +
+    '<li>Safariでこのページを開く</li>' +
+    '<li>下の共有ボタン（□↑）をタップ</li>' +
+    '<li>「ホーム画面に追加」を選ぶ</li></ol>' +
+    '<p class="note">データはこの端末のSafari内に保存されます。Safariのサイトデータを消すと、登録内容も消えます。</p></div>';
+}
+
+function render() {
+  var app = document.getElementById('app');
+  app.innerHTML = tab === 'calc' ? renderCalc() : tab === 'hist' ? renderHist() : renderSet();
+  document.querySelectorAll('nav button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === tab); });
+  initWheels();
+  if (tab === 'calc') refreshCalc();
+  window.scrollTo(0, 0);
+}
+function nowStr() {
+  var d = new Date();
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+
+document.addEventListener('click', function (e) {
+  var nb = e.target.closest('nav button');
+  if (nb) { tab = nb.dataset.tab; confirmClear = false; render(); return; }
+  var b = e.target.closest('[data-act]');
+  if (!b) return;
+  var a = b.dataset.act;
+  if (a === 'mode') { S.mode = b.dataset.v; save(); render(); }
+  else if (a === 'machine') {
+    var m = S.machines.filter(function (x) { return String(x.id) === b.dataset.id; })[0];
+    if (m) {
+      S.ratio = parseFloat(m.ratio); S.memo = m.name; save();
+      document.getElementById('memoIn').value = S.memo;
+      setWheel('wRatio', S.ratio); refreshCalc();
+    }
+  }
+  else if (a === 'saveHist') {
+    var v = calcNow();
+    if (v === null) { toast('値を確認してください'); return; }
+    var rev = S.mode === 'rev';
+    S.history.unshift(rev
+      ? {date: nowStr(), memo: S.memo, mode: 'rev', ratio: S.ratio, oilIn: S.oil, gas: v}
+      : {date: nowStr(), memo: S.memo, mode: 'fwd', ratio: S.ratio, gas: S.gas, oil: v});
+    S.history = S.history.slice(0, 200);
+    save(); toast('履歴に保存しました');
+  }
+  else if (a === 'delHist') { S.history.splice(parseInt(b.dataset.i, 10), 1); save(); render(); }
+  else if (a === 'clearHist') {
+    if (!confirmClear) { confirmClear = true; render(); return; }
+    S.history = []; confirmClear = false; save(); render(); toast('削除しました');
+  }
+  else if (a === 'addMachine') {
+    var name = document.getElementById('mName').value.trim();
+    if (!name) { toast('名前を入力してください'); return; }
+    S.machines.push({id: Date.now(), name: name, ratio: tmpRatio}); save(); render(); toast('追加しました');
+  }
+  else if (a === 'delMachine') {
+    S.machines = S.machines.filter(function (x) { return String(x.id) !== b.dataset.id; });
+    save(); render();
+  }
+});
+document.addEventListener('input', function (e) {
+  if (e.target.id === 'memoIn') { S.memo = e.target.value; save(); refreshCalc(); }
+});
+
+load();
+render();
+</script>
+</body>
+</html>
